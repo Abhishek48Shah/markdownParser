@@ -5,20 +5,23 @@ import (
 	"fmt"
 )
 
-const (
-	Paragraph int = iota
-)
-
-type Node struct {
-	Type      int
-	Value     string
-	LeftNode  *Node
-	RightNode *Node
+type Token struct {
+	Type  string
+	Name  string
+	Value string
 }
 
-func Convert(src []byte,dest *bytes.Buffer) error {
-	for val := range  bytes.FieldsSeq(src){
+func createToken(markdown []byte) ([]Token, error) {
+	for val := range bytes.FieldsSeq(markdown) {
 		fmt.Println(string(val))
 	}
+	return nil, nil
+}
+func Convert(src []byte, dest *bytes.Buffer) error {
+	tokens, err := createToken(src)
+	if err != nil {
+		return err
+	}
+	fmt.Println(tokens)
 	return nil
 }
