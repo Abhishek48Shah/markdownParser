@@ -3,59 +3,71 @@ package parser
 import (
 	"bytes"
 	"fmt"
-	"strings"
 )
 
 type Token struct {
 	Type  TokenType
-	Mark  string
 	Value string
 }
-type TokenType int
+type TokenType string
 
 const (
-	Heading TokenType = iota
-	Bold
-	Italic
+	Heading     TokenType = "Heading"
+	Bold        TokenType = "Blod"
+	Text        TokenType = "Text"
+	NewLine     TokenType = "NewLine"
+	UnOrderList TokenType = "UnOrderList"
 )
 
 func createToken(markdown []byte) ([]Token, error) {
-	var (
-		currentIndex int
-	)
+	fmt.Printf("%q", string(markdown))
 	var tokens []Token
 	length := len(markdown)
-	for currentIndex < length {
-		var newToken Token
-		if markdown[currentIndex] == '#' {
-			if currentIndex+1 < length && (markdown[currentIndex+1] == '#' || markdown[currentIndex+1] == ' ') {
-				newToken.Type = Heading
-				count := 1
-				for currentIndex < len(markdown) {
-					currentIndex += 1
-					if markdown[currentIndex] == '#' {
-						count += 1
-					} else {
-						break
-					}
-				}
-				currentIndex += 1
-				newToken.Mark = strings.Repeat("#", count)
-				var temp string
-				for currentIndex < length {
-					if markdown[currentIndex] != '\n' {
-						temp += string(markdown[currentIndex])
-					} else {
-						break
-					}
-					currentIndex += 1
-				}
-				newToken.Value = temp
-				tokens = append(tokens, newToken)
-				newToken = Token{}
+	var currIndex int
+	for currIndex < length {
+		switch markdown[currIndex] {
+		case '#':
+			newToken := Token{Type: Heading}
+			for currIndex+1 < length && (markdown[currIndex+1] == ' ' || markdown[currIndex+1] == '#') {
+				newToken.Value += string(markdown[currIndex])
+				currIndex += 1
 			}
+			tokens = append(tokens, newToken)
+		case '\n':
+			if markdown[currIndex-1] == '\n' {
+				newToken := Token{Type: NewLine}
+				tokens = append(tokens, newToken)
+			}
+		case '-':
+			if currIndex+1 < length && markdown[currIndex+1] == ' ' {
+				newToken := Token{Type: UnOrderList, Value: string(markdown[currIndex])}
+				tokens = append(tokens, newToken)
+			}
+		case '*':
+			prevIndex := currIndex
+			currIndex += 1
+			isClosed := false
+			for currIndex < length {
+				if markdown[currIndex] == '*'{
+					isClosed = true
+				}
+				currIndex += 1
+			}
+		default:
+			var temp string
+			newNode := Token{Type: Text}
+			for currIndex < length {
+				if markdown[currIndex] == '\n' {
+					break
+				}
+
+				temp += string(markdown[currIndex])
+				currIndex++
+			}
+			newNode.Value = temp
+			tokens = append(tokens, newNode)
 		}
-		currentIndex += 1
+		currIndex += 1
 	}
 	return tokens, nil
 }
@@ -65,7 +77,7 @@ func Convert(src []byte, dest *bytes.Buffer) error {
 		return err
 	}
 	for _, value := range tokens {
-		fmt.Println(value.Mark, value.Type, string(value.Value))
+		fmt.Println(value.Type, string(value.Value))
 	}
 	return nil
 }
